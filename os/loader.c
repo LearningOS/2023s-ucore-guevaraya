@@ -3,6 +3,7 @@
 #include "trap.h"
 
 static int app_num;
+#include "timer.h"
 static uint64 *app_info_ptr;
 extern char _app_num[], _app_names[], INIT_PROC[];
 char names[MAX_APP_NUM][MAX_STR_LEN];
@@ -97,6 +98,15 @@ int load_init_app()
 	if (p == NULL) {
 		panic("allocproc\n");
 	}
+
+		p->ti.status = UnInit;
+		p->ti.time = get_time();
+		for (int j = 0; j < MAX_SYSCALL_NUM; j++)
+		{
+			/* code */
+			p->ti.syscall_times[j] = 0;
+		}
+
 	debugf("load init proc %s", INIT_PROC);
 	loader(id, p);
 	add_task(p);

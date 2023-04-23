@@ -4,6 +4,7 @@
 #include "trap.h"
 #include "vm.h"
 #include "queue.h"
+#include "timer.h"
 
 struct proc pool[NPROC];
 __attribute__((aligned(16))) char kstack[NPROC][PAGE_SIZE];
@@ -32,6 +33,13 @@ void proc_init()
 		p->state = UNUSED;
 		p->kstack = (uint64)kstack[p - pool];
 		p->trapframe = (struct trapframe *)trapframe[p - pool];
+		/*
+		* LAB1: you may need to initialize your new fields of proc here
+		*/
+		p->ti.status = UnInit;
+		//p->ti.time = get_time();
+		
+
 	}
 	idle.kstack = (uint64)boot_stack_top;
 	idle.pid = IDLE_PID;
@@ -103,13 +111,16 @@ void scheduler()
 {
 	struct proc *p;
 	for (;;) {
-		/*int has_proc = 0;
+		/* int has_proc = 0;
 		for (p = pool; p < &pool[NPROC]; p++) {
 			if (p->state == RUNNABLE) {
 				has_proc = 1;
 				tracef("swtich to proc %d", p - pool);
 				p->state = RUNNING;
+	
 				current_proc = p;
+				p->ti.status = Running;
+				//p->ti.time = get_time();
 				swtch(&idle.context, &p->context);
 			}
 		}
@@ -123,6 +134,7 @@ void scheduler()
 		tracef("swtich to proc %d", p - pool);
 		p->state = RUNNING;
 		current_proc = p;
+		p->ti.status = Running;
 		swtch(&idle.context, &p->context);
 	}
 }

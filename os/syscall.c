@@ -2,9 +2,10 @@
 #include "console.h"
 #include "defs.h"
 #include "loader.h"
-#include "syscall_ids.h"
 #include "timer.h"
 #include "trap.h"
+#include "syscall_ids.h"
+#include "proc.h"
 
 uint64 sys_write(int fd, uint64 va, uint len)
 {
@@ -114,6 +115,83 @@ uint64 sys_sbrk(int n)
         return addr;
 }
 
+
+
+// TODO: add support for mmap and munmap syscall.
+// hint: read through docstrings in vm.c. Watching CH4 video may also help.
+// Note the return value and PTE flags (especially U,X,W,R)
+/*
+* LAB1: you may need to define sys_task_info here
+*/
+int64 sys_task_info(TaskInfo * ti)
+{	
+	int offset_time;
+	int ret;
+
+	if(!ti)
+		return -1;
+	TaskInfo *ktaskinfo = &curr_proc()->ti;
+	ret = copyout(curr_proc()->pagetable, (uint64)ti, (char*)ktaskinfo,sizeof(TaskInfo));
+	offset_time = get_time()- ktaskinfo->time;
+	ret = copyout(curr_proc()->pagetable,(uint64)&ti->time, (char*)&offset_time, sizeof(int)); 
+	return ret;
+}
+uint64 sys_mmap(void* start, unsigned long long len, int port, int flag, int fd)
+{
+	uint64 ret, left_size, max_npage;
+	char *mem;
+	int xperm;
+	if(!start)return -1;
+	if(len > MAXVA)return -1;
+	if(!PGALIGNED((uint64)start)) return -1;
+	if((port&(~7)|| port == 0))return -1;
+	xperm = PTE_U;
+	if((port&1))xperm |=PTE_R;
+	if((port&2))xperm |=PTE_W;
+	if((port&4))xperm |=PTE_X;
+
+	left_size = len;
+	while(left_size>0)
+	{
+		mem = kalloc();
+		if(mem == 0){
+			return -1;
+		}
+		memset(mem, 0, PGSIZE);
+		tracef("start[0x%x] mem: %x port:%x xperm:0x%x", start, (uint64)mem, port, xperm);
+		ret = mappages(curr_proc()->pagetable, (uint64)start, PGSIZE, (uint64)mem, xperm);
+		tracef("start[0x%x] ret:%d", start, ret);
+		if (ret != 0) 
+		{ 
+			kfree(mem);
+			return ret;
+		}
+		max_npage = (uint64)(start)/PGSIZE + 1;
+		if(max_npage>curr_proc()->max_page)curr_proc()->max_page = max_npage; 
+		tracef("start[0x%x].pa = 0x%x", start, walkaddr(curr_proc()->pagetable, (uint64)start));
+		if(left_size <= PGSIZE){
+
+			return 0;
+		}else{
+			left_size -=PGSIZE;
+			start +=PGSIZE;
+		}
+	}
+	return 0;
+}
+uint64 sys_munmap(void* start, unsigned long long len)
+{
+	uint64 page_num;
+	if(!start)return -1;
+	if(len > MAXVA ||  len%PGSIZE != 0)return -1;
+	if(!PGALIGNED((uint64)start)) return -1;
+
+
+	page_num = (len-1)/PGSIZE+1;
+	tracef("start[%x] len:%x page_num:%x", start, len, page_num);
+	uvmunmap(curr_proc()->pagetable, (uint64)start, page_num, 1);
+	return 0;
+}
 extern char trap_page[];
 
 void syscall()
@@ -124,6 +202,10 @@ void syscall()
 			   trapframe->a3, trapframe->a4, trapframe->a5 };
 	tracef("syscall %d args = [%x, %x, %x, %x, %x, %x]", id, args[0],
 	       args[1], args[2], args[3], args[4], args[5]);
+	/*
+	* LAB1: you may need to update syscall counter for task info here
+	*/
+	curr_proc()->ti.syscall_times[id]++;
 	switch (id) {
 	case SYS_write:
 		ret = sys_write(args[0], args[1], args[2]);
@@ -159,8 +241,23 @@ void syscall()
 		ret = sys_spawn(args[0]);
 		break;
 	case SYS_sbrk:
-                ret = sys_sbrk(args[0]);
-                break;
+		ret = sys_sbrk(args[0]);
+		break;
+	/*
+	* LAB1: you may need to add SYS_taskinfo case here
+	*/
+	case SYS_task_info:
+		//errorf("syscall_time[%d]:%d before", id,  curr_proc()->ti.syscall_times[id]);
+		ret = sys_task_info((TaskInfo*)args[0]);
+		//errorf("syscall_time[%d]:%d after", id,   curr_proc()->ti.syscall_times[id]);
+		break;
+	case SYS_mmap:
+		ret = sys_mmap((void*)args[0], (unsigned long long)args[1], (int)args[2], 
+												(int)args[3], (int)args[4]);
+		break;
+	case SYS_munmap:
+		ret = sys_munmap((void*)args[0], (unsigned long long)args[1]);
+		break;
 	default:
 		ret = -1;
 		errorf("unknown syscall %d", id);
