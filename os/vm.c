@@ -127,7 +127,7 @@ int mappages(pagetable_t pagetable, uint64 va, uint64 size, uint64 pa, int perm)
 			return -1;
 		}
 		if (*pte & PTE_V) {
-			errorf("remap");
+			debugf("remap");
 			return -1;
 		}
 		*pte = PA2PTE(pa) | perm | PTE_V;
@@ -146,13 +146,14 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 {
 	uint64 a;
 	pte_t *pte;
-
+	tracef("uvmunmap start va:%x npages:%x", va, npages);
 	if ((va % PGSIZE) != 0)
 		panic("uvmunmap: not aligned");
 
 	for (a = va; a < va + npages * PGSIZE; a += PGSIZE) {
 		if ((pte = walk(pagetable, a, 0)) == 0)
 			continue;
+		tracef("uvmunmap va:0x%x pte:0x%x", a, pte);
 		if ((*pte & PTE_V) != 0) {
 			if (PTE_FLAGS(*pte) == PTE_V)
 				panic("uvmunmap: not a leaf");
@@ -194,6 +195,7 @@ void freewalk(pagetable_t pagetable)
 	// there are 2^9 = 512 PTEs in a page table.
 	for (int i = 0; i < 512; i++) {
 		pte_t pte = pagetable[i];
+		if(pte)tracef("%s i:%d pte:0x%x pa:0x%x", __func__, i, pte, PTE2PA(pte));
 		if ((pte & PTE_V) && (pte & (PTE_R | PTE_W | PTE_X)) == 0) {
 			// this PTE points to a lower-level page table.
 			uint64 child = PTE2PA(pte);

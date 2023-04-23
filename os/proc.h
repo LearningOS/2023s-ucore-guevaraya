@@ -1,13 +1,15 @@
 #ifndef PROC_H
 #define PROC_H
-
 #include "riscv.h"
 #include "types.h"
+#include "queue.h"
+#include "syscall_ids.h"
 
 #define NPROC (512)
 #define FD_BUFFER_SIZE (16)
-
+typedef unsigned long long Stride_t;
 struct file;
+
 
 // Saved registers for kernel context switches.
 struct context {
@@ -31,6 +33,21 @@ struct context {
 
 enum procstate { UNUSED, USED, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
 
+typedef enum {
+	UnInit,
+	Ready,
+	Running,
+	Exited,
+} TaskStatus;
+/*
+* LAB1: you may need to define struct for TaskInfo here
+*/
+typedef	struct TaskInfo_t {
+    TaskStatus status;
+    unsigned int syscall_times[MAX_SYSCALL_NUM];
+    int time;
+}TaskInfo;
+
 // Per-process state
 struct proc {
 	enum procstate state; // Process state
@@ -47,9 +64,16 @@ struct proc {
 		[FD_BUFFER_SIZE]; //File descriptor table, using to record the files opened by the process
 	uint64 program_brk;
 	uint64 heap_bottom;
+		/*
+	* LAB1: you may need to add some new fields here
+	*/
+	TaskInfo ti;
+	uint64 priority;
+	unsigned long long stride;
 };
 
 int cpuid();
+
 struct proc *curr_proc();
 void exit(int);
 void proc_init();
@@ -67,7 +91,7 @@ int init_stdio(struct proc *);
 int push_argv(struct proc *, char **);
 // swtch.S
 void swtch(struct context *, struct context *);
-
+int spawn(char *);
 int growproc(int n);
-
+int pop_prior_queue(struct queue *, struct proc* );
 #endif // PROC_H

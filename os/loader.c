@@ -46,6 +46,7 @@ int bin_loader(struct inode *ip, struct proc *p)
 	p->program_brk = p->ustack + USTACK_SIZE;
         p->heap_bottom = p->ustack + USTACK_SIZE;
 	p->state = RUNNABLE;
+	debugf("%s: set runnable %d", __func__, p->pid);
 	return 0;
 }
 
@@ -66,6 +67,14 @@ int load_init_app()
 	argv[0] = INIT_PROC;
 	argv[1] = NULL;
 	p->trapframe->a0 = push_argv(p, argv);
-	add_task(p);
+
+	p->ti.status = UnInit;
+	p->ti.time = get_time();
+	for (int j = 0; j < MAX_SYSCALL_NUM; j++)
+	{
+		/* code */
+		p->ti.syscall_times[j] = 0;
+	}
+
 	return 0;
 }
