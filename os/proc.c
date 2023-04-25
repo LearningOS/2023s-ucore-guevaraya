@@ -35,6 +35,7 @@ void proc_init(void)
 		* LAB1: you may need to initialize your new fields of proc here
 		*/
 		p->ti.status = UnInit;
+		//p->ti.time = get_time();
 		
 
 	}
@@ -87,9 +88,9 @@ void scheduler(void)
 				/*
 				* LAB1: you may need to init proc start time here
 				*/
-				p->ti.status = RUNNING;
-				p->ti.time = get_time();
 				current_proc = p;
+				p->ti.status = Running;
+				//p->ti.time = get_time();
 				swtch(&idle.context, &p->context);
 			}
 		}

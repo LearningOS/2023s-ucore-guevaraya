@@ -49,10 +49,14 @@ int64 sys_task_info(TaskInfo * ti)
 	for(int j = 0; j < MAX_SYSCALL_NUM; j++){
 		ti->syscall_times[j] = ktaskinfo->syscall_times[j];
 	}
-	ktaskinfo->time = get_time()- ktaskinfo->time;
-	ti->time = ktaskinfo->time;
+	ti->time= get_time()- ktaskinfo->time;
 	return 0;
 }
+uint64 sys_getpid()
+{
+	return curr_proc()->pid;
+}
+
 extern char trap_page[];
 
 void syscall()
@@ -85,6 +89,9 @@ void syscall()
 	*/
 	case SYS_task_info:
 		ret = sys_task_info((TaskInfo*)args[0]);
+		break;
+	case SYS_getpid:
+		ret = sys_getpid();
 		break;
 	default:
 		ret = -1;

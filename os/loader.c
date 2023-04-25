@@ -1,7 +1,7 @@
 #include "loader.h"
 #include "defs.h"
 #include "trap.h"
-
+#include "timer.h"
 static uint64 app_num;
 static uint64 *app_info_ptr;
 extern char _app_num[], ekernel[];
@@ -52,7 +52,7 @@ int run_all_app()
 		* LAB1: you may need to initialize your new fields of proc here
 		*/
 		p->ti.status = UnInit;
-		p->ti.time = 0;
+		p->ti.time = get_time();
 		for (int j = 0; j < MAX_SYSCALL_NUM; j++)
 		{
 			/* code */
