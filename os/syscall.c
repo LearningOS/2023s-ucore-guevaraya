@@ -94,9 +94,9 @@ uint64 sys_mmap(void* start, unsigned long long len, int port, int flag, int fd)
 	if(!PGALIGNED((uint64)start)) return -1;
 	if((port&(~7)|| port == 0))return -1;
 	xperm = PTE_U;
-	if((port&1)>0)xperm |=PTE_R;
-	if((port&2)>0)xperm |=PTE_W;
-	if((port&4)>0)xperm |=PTE_X;
+	if((port&1))xperm |=PTE_R;
+	if((port&2))xperm |=PTE_W;
+	if((port&4))xperm |=PTE_X;
 
 	left_size = len;
 	while(left_size>0)
@@ -106,15 +106,15 @@ uint64 sys_mmap(void* start, unsigned long long len, int port, int flag, int fd)
 			return -1;
 		}
 		memset(mem, 0, PGSIZE);
-		tracef("start[%x] mem: %x port:%x xperm:%x", start, (uint64)mem, port, xperm);
+		tracef("start[0x%x] mem: %x port:%x xperm:0x%x", start, (uint64)mem, port, xperm);
 		ret = mappages(curr_proc()->pagetable, (uint64)start, PGSIZE, (uint64)mem, xperm);
-
+		tracef("start[0x%x] ret:%d", start, ret);
 		if (ret != 0) 
 		{ 
 			kfree(mem);
-			return -1;
+			return ret;
 		}
-		tracef("start[0x%x].pa = 0x%x", start, walkaddr(curr_proc()->pagetable, (uint64)start));
+		tracef("start[0x%x].pa = 0x%x\n", start, walkaddr(curr_proc()->pagetable, (uint64)start));
 		if(left_size <= PGSIZE){
 
 			return 0;
@@ -133,8 +133,8 @@ uint64 sys_munmap(void* start, unsigned long long len)
 	if(!PGALIGNED((uint64)start)) return -1;
 
 
-	page_num = len/PGSIZE + 1 ;
-	tracef("start[%x] len:%x page_num:%x", start, len, page_num);
+	page_num = (len-1)/PGSIZE+1;
+	tracef("munmap start[%x] len:%x page_num:%x", start, len, page_num);
 	uvmunmap(curr_proc()->pagetable, (uint64)start, page_num, 1);
 	return 0;
 }
