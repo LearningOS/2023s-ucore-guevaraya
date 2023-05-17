@@ -80,6 +80,7 @@ int bin_loader(uint64 start, uint64 end, struct proc *p)
 	p->program_brk = p->ustack + USTACK_SIZE;
         p->heap_bottom = p->ustack + USTACK_SIZE;
 	p->state = RUNNABLE;
+	debugf("%s: set runnable %d", __func__, p->pid);
 	return 0;
 }
 

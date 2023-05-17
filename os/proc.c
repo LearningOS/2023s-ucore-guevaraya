@@ -38,7 +38,8 @@ void proc_init()
 		*/
 		p->ti.status = UnInit;
 		//p->ti.time = get_time();
-		
+		p->priority = 16;
+		p->stride = 0;
 
 	}
 	idle.kstack = (uint64)boot_stack_top;
@@ -55,12 +56,12 @@ int allocpid()
 
 struct proc *fetch_task()
 {
-	int index = pop_queue(&task_queue);
+	int index = pop_prior_queue(&task_queue, pool);
 	if (index < 0) {
-		debugf("No task to fetch\n");
+		errorf("No task to fetch\n");
 		return NULL;
 	}
-	debugf("fetch task %d(pid=%d) to task queue\n", index, pool[index].pid);
+	debugf("fetch task %d(pid=%d, state:%d) to task queue\n", index, pool[index].pid, pool[index].state);
 	return pool + index;
 }
 
@@ -158,6 +159,7 @@ void sched()
 void yield()
 {
 	current_proc->state = RUNNABLE;
+	debugf("%s: set runnable %d", __func__, current_proc->pid);
 	add_task(current_proc);
 	sched();
 }
@@ -184,6 +186,7 @@ int fork()
 	struct proc *np;
 	struct proc *p = curr_proc();
 	// Allocate process.
+	debugf("fork:%d", p->pid);
 	if ((np = allocproc()) == 0) {
 		panic("allocproc\n");
 	}
@@ -198,6 +201,7 @@ int fork()
 	np->trapframe->a0 = 0;
 	np->parent = p;
 	np->state = RUNNABLE;
+	debugf("%s: set runnable %d", __func__, np->pid);
 	add_task(np);
 	return np->pid;
 }
@@ -240,6 +244,7 @@ int wait(int pid, int *code)
 			return -1;
 		}
 		p->state = RUNNABLE;
+		debugf("%s: set runnable %d", __func__, p->pid);
 		add_task(p);
 		sched();
 	}
@@ -286,4 +291,26 @@ int growproc(int n)
         }
         p->program_brk = program_brk;
         return 0;
+}
+int spawn(char *name)
+{
+	struct proc *np;
+	struct proc *p = curr_proc();
+	// Allocate process.
+	tracef("spawn:%d", p->pid);
+	if ((np = allocproc()) == 0) {
+		panic("allocproc\n");
+	}
+	np->parent = p;
+	int id = get_id_by_name(name);
+	if (id < 0)
+		return -1;
+	debugf("%s: set runnable nppid:%d", __func__, np->pid);
+	loader(id, np);
+	add_task(np);
+	return np->pid;
+
+
+
+	return 0;
 }

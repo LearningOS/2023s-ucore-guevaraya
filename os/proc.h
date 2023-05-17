@@ -7,7 +7,7 @@
 
 #define NPROC (512)
 #define FD_BUFFER_SIZE (16)
-
+typedef unsigned long long Stride_t;
 struct file;
 
 
@@ -67,6 +67,8 @@ struct proc {
 	* LAB1: you may need to add some new fields here
 	*/
 	TaskInfo ti;
+	uint64 priority;
+	unsigned long long stride;
 };
 
 int cpuid();
@@ -86,7 +88,7 @@ struct proc *allocproc();
 int fdalloc(struct file *);
 // swtch.S
 void swtch(struct context *, struct context *);
-
+int spawn(char *);
 int growproc(int n);
-
+int pop_prior_queue(struct queue *, struct proc* );
 #endif // PROC_H

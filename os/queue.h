@@ -14,5 +14,4 @@ struct queue {
 void init_queue(struct queue *);
 void push_queue(struct queue *, int);
 int pop_queue(struct queue *);
-
 #endif // QUEUE_H
