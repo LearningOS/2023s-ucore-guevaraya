@@ -27,7 +27,7 @@ int pop_queue(struct queue *q)
 		q->empty = 1;
 	return value;
 }
-const Stride_t BIG_STRIDE = 128;
+const Stride_t BIG_STRIDE = 64;
 int cmp(Stride_t a, Stride_t b) {
     // YOUR CODE HERE
      if(a == b) 
@@ -66,7 +66,7 @@ int pop_prior_queue(struct queue *q, struct proc* p)
 	int low_index = find_low_stride_queue(q, p);
 	int pop_value;
 	int value = q->data[q->front];
-	debugf("find low_index:%d, pid:%d", low_index, q->data[low_index]);
+	debugf("find low_index:%d, pid:%d, stride:%d", low_index, q->data[low_index], p[q->data[low_index]].stride);
 	if(q->data[low_index] > 200){
 		panic("invalid low_index");
 	}

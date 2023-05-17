@@ -106,9 +106,10 @@ uint64 sys_set_priority(long long prio){
     // TODO: your job is to complete the sys call
 	struct proc *p = curr_proc();
 	if(prio<2)
-    	return -1;
+    		return -1;
 	else
 		p->priority = prio;
+	debugf("sys_set_prior: %d\n", prio);
 	return prio;
 }
 
