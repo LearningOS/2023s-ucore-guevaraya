@@ -2,6 +2,7 @@
 #include "defs.h"
 #include "file.h"
 #include "trap.h"
+#include "timer.h"
 
 extern char INIT_PROC[];
 
@@ -46,7 +47,7 @@ int bin_loader(struct inode *ip, struct proc *p)
 	p->program_brk = p->ustack + USTACK_SIZE;
         p->heap_bottom = p->ustack + USTACK_SIZE;
 	p->state = RUNNABLE;
-	debugf("%s: set runnable %d", __func__, p->pid);
+	debugf("%s: set runnable %d epc:%x", __func__, p->pid,  p->trapframe->epc);
 	return 0;
 }
 
@@ -75,6 +76,6 @@ int load_init_app()
 		/* code */
 		p->ti.syscall_times[j] = 0;
 	}
-
+	add_task(p);
 	return 0;
 }

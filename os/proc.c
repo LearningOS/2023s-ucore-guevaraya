@@ -380,22 +380,44 @@ int growproc(int n)
 int spawn(char *name)
 {
 	struct proc *np;
+	struct inode *ip;
 	struct proc *p = curr_proc();
+	int i;
 	// Allocate process.
-	tracef("spawn:%d", p->pid);
+	debugf("spawn:%d %s", p->pid, name);
 	if ((np = allocproc()) == 0) {
 		panic("allocproc\n");
 	}
 	np->parent = p;
-	int id = get_id_by_name(name);
-	if (id < 0)
+	if ((ip = namei(name)) == 0) {
+		errorf("invalid file name %s\n", name);
 		return -1;
-	debugf("%s: set runnable nppid:%d", __func__, np->pid);
-	loader(id, np);
+	}
+	//np->max_page = p->max_page;
+	//uvmunmap(np->pagetable, 0, np->max_page, 1);
+	// Copy user memory from parent to child.
+	/*
+	if (uvmcopy(p->pagetable, np->pagetable, p->max_page) < 0) {
+		panic("uvmcopy\n");
+	}
+	*/
+	// Copy file table to new proc
+	for (i = 0; i < FD_BUFFER_SIZE; i++) {
+		if (p->files[i] != NULL) {
+			// TODO: f->type == STDIO ?
+			p->files[i]->ref++;
+			np->files[i] = p->files[i];
+		}
+	}
+	// copy saved user registers.
+	//*(np->trapframe) = *(p->trapframe);
+	
+	bin_loader(ip, np);
+	debugf("spawn: bin_loader %d %s", np->pid, name);
+	iput(ip);
+	
 	add_task(np);
+
 	return np->pid;
 
-
-
-	return 0;
 }

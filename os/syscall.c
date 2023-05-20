@@ -39,7 +39,7 @@ uint64 sys_write(int fd, uint64 va, uint64 len)
 	struct proc *p = curr_proc();
 	struct file *f = p->files[fd];
 	if (f == NULL) {
-		errorf("invalid fd %d\n", fd);
+		errorf("%s invalid fd %d\n", __func__,fd);
 		return -1;
 	}
 	switch (f->type) {
@@ -59,7 +59,7 @@ uint64 sys_read(int fd, uint64 va, uint64 len)
 	struct proc *p = curr_proc();
 	struct file *f = p->files[fd];
 	if (f == NULL) {
-		errorf("invalid fd %d\n", fd);
+		errorf("%s invalid fd %d\n", __func__, fd);
 		return -1;
 	}
 	switch (f->type) {
@@ -167,7 +167,7 @@ uint64 sys_close(int fd)
 	struct proc *p = curr_proc();
 	struct file *f = p->files[fd];
 	if (f == NULL) {
-		errorf("invalid fd %d", fd);
+		errorf("%s invalid fd %d", __func__, fd);
 		return -1;
 	}
 	fileclose(f);
@@ -184,7 +184,7 @@ int sys_fstat(int fd, uint64 stat)
 int sys_linkat(int olddirfd, uint64 oldpath, int newdirfd, uint64 newpath,
 	       uint64 flags)
 {
-	return -1
+	return -1;
 }
 uint64 sys_set_priority(long long prio){
     // TODO: your job is to complete the sys call

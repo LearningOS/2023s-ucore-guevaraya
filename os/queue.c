@@ -67,9 +67,6 @@ int pop_prior_queue(struct queue *q, struct proc* p)
 	int pop_value;
 	int value = q->data[q->front];
 	debugf("find low_index:%d, pid:%d, stride:%d", low_index, q->data[low_index], p[q->data[low_index]].stride);
-	if(q->data[low_index] > 200){
-		panic("invalid low_index");
-	}
 	if(low_index != q->front){
 		pop_value = q->data[low_index];
 		q->data[low_index] = value;
