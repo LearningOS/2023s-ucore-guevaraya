@@ -177,8 +177,30 @@ uint64 sys_close(int fd)
 
 int sys_fstat(int fd, uint64 stat)
 {
+	struct Stat kstatus;
+	if (fd < 0 || fd > FD_BUFFER_SIZE)
+		return -1;
+	if(stat ==0)
+		return -1;
+	struct proc *p = curr_proc();
+	struct file *f = p->files[fd];
+	if (f == NULL) {
+		errorf("%s invalid fd %d\n", __func__,fd);
+		return -1;
+	}
+	kstatus.ino = (uint64)f->ip;
+	if(f->ip->type == T_FILE)
+	{
+		kstatus.mode = FILE;
+	}else if(f->ip->type == T_DIR){
+		kstatus.mode = DIR;
+	}else
+		kstatus.mode = 0;
+	copyout(p->pagetable, stat, (char*)&kstatus, sizeof(kstatus));
+
+		
 	//TODO: your job is to complete the syscall
-	return -1;
+	return 0;
 }
 
 int sys_linkat(int olddirfd, uint64 oldpath, int newdirfd, uint64 newpath,
