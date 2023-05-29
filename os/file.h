@@ -18,6 +18,7 @@ struct inode {
 	uint size;
 	uint addrs[NDIRECT + 1];
 	// LAB4: You may need to add link count here
+	uint nlink;
 };
 
 // Defines a file in memory that provides information about the current use of the file and the corresponding inode location
@@ -31,10 +32,10 @@ struct file {
 };
 struct Stat {
 	uint64 dev;     // 文件所在磁盘驱动号，该实现写死为 0 即可。
-       	uint64 ino;     // inode 文件所在 inode 编号
-       	uint32 mode;    // 文件类型
-       	uint32 nlink;   // 硬链接数量，初始为1
-       	uint64 pad[7];  // 无需考虑，为了兼容性设计
+	uint64 ino;     // inode 文件所在 inode 编号
+	uint mode;    // 文件类型
+	uint nlink;   // 硬链接数量，初始为1
+	uint64 pad[7];  // 无需考虑，为了兼容性设计
 };
 
 // 文件类型只需要考虑:
@@ -57,5 +58,6 @@ uint64 inodewrite(struct file *, uint64, uint64);
 uint64 inoderead(struct file *, uint64, uint64);
 struct file *stdio_init(int);
 int show_all_files();
-
+int filelink(char *srcpath, char * dstpath, uint64 flags);
+int fileunlink(char * dstpath, uint64 flags);
 #endif // FILE_H

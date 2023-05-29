@@ -188,7 +188,9 @@ int sys_fstat(int fd, uint64 stat)
 		errorf("%s invalid fd %d\n", __func__,fd);
 		return -1;
 	}
-	kstatus.ino = (uint64)f->ip;
+	kstatus.ino = (uint64)f->ip->inum;
+	kstatus.nlink = (uint64)f->ip->nlink;
+	kstatus.dev = (uint64)f->ip->dev;
 	if(f->ip->type == T_FILE)
 	{
 		kstatus.mode = FILE;
@@ -206,7 +208,11 @@ int sys_fstat(int fd, uint64 stat)
 int sys_linkat(int olddirfd, uint64 oldpath, int newdirfd, uint64 newpath,
 	       uint64 flags)
 {
-	return -1;
+	struct proc *p = curr_proc();
+	char linkpath[200], srcpath[200];
+	copyinstr(p->pagetable, srcpath, oldpath, 200);
+	copyinstr(p->pagetable, linkpath, newpath, 200);
+	return filelink(srcpath, linkpath, flags);
 }
 uint64 sys_set_priority(long long prio){
     // TODO: your job is to complete the sys call
@@ -221,8 +227,14 @@ uint64 sys_set_priority(long long prio){
 
 int sys_unlinkat(int dirfd, uint64 name, uint64 flags)
 {
+	char dstpath[200];
+	struct proc *p = curr_proc();
+	if(name == 0)
+		return -1;
+	copyinstr(p->pagetable, dstpath, name, 200);
 	//TODO: your job is to complete the syscall
-	return -1;
+
+	return fileunlink(dstpath, flags);
 }
 
 uint64 sys_sbrk(int n)

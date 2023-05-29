@@ -200,11 +200,13 @@ uint ialloc(ushort type)
 {
 	uint inum = freeinode++;
 	struct dinode din;
-
+	//printf("%s: type=%d\n", __func__, type);
 	bzero(&din, sizeof(din));
 	din.type = xshort(type);
 	din.size = xint(0);
 	// LAB4: You may want to init link count here
+	din.nlink = 1;
+	printf("%s: inum:%d type=0x%x\n", __func__, inum, din.type);
 	winode(inum, &din);
 	return inum;
 }

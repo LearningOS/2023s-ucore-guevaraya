@@ -59,6 +59,7 @@ struct file *filealloc()
 //Show names of all files in the root_dir.
 int show_all_files()
 {
+	errorf("%s", __func__);
 	return dirls(root_dir());
 }
 
@@ -68,6 +69,7 @@ int show_all_files()
 static struct inode *create(char *path, short type)
 {
 	struct inode *ip, *dp;
+	debugf("%s", __func__);
 	dp = root_dir(); //Remember that the root_inode is open in this step,so it needs closing then.
 	ivalid(dp);
 	if ((ip = dirlookup(dp, path, 0)) != 0) {
@@ -101,6 +103,7 @@ int fileopen(char *path, uint64 omode)
 	int fd;
 	struct file *f;
 	struct inode *ip;
+	debugf("%s", __func__);
 	if (omode & O_CREATE) {
 		ip = create(path, T_FILE);
 		if (ip == 0) {
@@ -134,11 +137,80 @@ int fileopen(char *path, uint64 omode)
 	}
 	return fd;
 }
+static char * base_name(char * path, char ** filename)
+{
+	char * p_end = path + strlen(path)-1;
+	int count = 0;
+	debugf("path:%s path_addr:%x", path, path);
+	while(*p_end != '\\' && p_end != path){
+		debugf("p_end:0x%x",p_end);	
+		p_end--;
+		count++;
+	}
+	if(p_end == path){
+		*filename = path;
+		return NULL;
+	}else
+	{
+		*filename = p_end+1;
+		*p_end = '\0';
+		return path;
+	}
+}
+int filelink(char *srcpath, char * linkpath, uint64 flags)
+{
+	struct inode *ip, *dp;
+	char * basename, *filename;
+	debugf("%s", __func__);
+	if(0 == strncmp(linkpath, srcpath, 200))
+		return -1;
+	if ((ip = namei(srcpath)) == 0)
+	{
+		errorf("%s not found %s", __func__, srcpath);
+		return -1;
+	}
 
+	if((basename = base_name(linkpath, &filename)) == NULL){
+		dp = root_dir();
+	}else{
+		dp = namei(basename);
+	}
+	ivalid(ip);
+	ivalid(dp);
+	//dirls(dp);
+	//iupdate(ip);
+	if (dirlink(dp, linkpath, ip->inum) < 0){
+		panic("%s: fail dirlink", __func__);
+	}
+	//dirls(dp);
+	iput(dp);
+	iput(ip);
+	return 0;
+}
+int fileunlink(char * linkpath, uint64 flags)
+{
+	struct inode *dp;
+	char basename[200], * filename;
+	debugf("%s: unlink:%s", __func__, linkpath);
+
+	strncpy(basename, linkpath, strlen(linkpath)+1);
+	if(base_name(basename, &filename) == NULL){
+		dp = root_dir();
+	}else{
+		dp = namei(basename);
+	}
+	ivalid(dp);
+	if (dirunlink(dp, filename) < 0){
+		panic(" %s filelink: fail dirlink", __func__);
+	}
+	iput(dp);
+	return 0;
+}
 // Write data to inode.
 uint64 inodewrite(struct file *f, uint64 va, uint64 len)
 {
 	int r;
+	debugf("%s", __func__);
 	ivalid(f->ip);
 	if ((r = writei(f->ip, 1, va, f->off, len)) > 0)
 		f->off += r;
@@ -149,6 +221,7 @@ uint64 inodewrite(struct file *f, uint64 va, uint64 len)
 uint64 inoderead(struct file *f, uint64 va, uint64 len)
 {
 	int r;
+	debugf("%s", __func__);
 	ivalid(f->ip);
 	if ((r = readi(f->ip, 1, va, f->off, len)) > 0)
 		f->off += r;

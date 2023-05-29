@@ -57,6 +57,7 @@ int load_init_app()
 	struct inode *ip;
 	struct proc *p = allocproc();
 	init_stdio(p);
+	errorf("%s", __func__);
 	if ((ip = namei(INIT_PROC)) == 0) {
 		errorf("invalid init proc name\n");
 		return -1;
