@@ -4,7 +4,10 @@
 #include "types.h"
 
 #define WAIT_QUEUE_MAX_LENGTH 16
-
+#define	DEAD_CODE	-0xDEAD
+#define	DEADLOCK_DETECTLOCK_FINISH	（2）
+#define DEADLOCK_DETECTLOCK_PENDING  (1)
+#define DEADLOCK_DETECTLOCK_DEFAULT	 (0)
 struct mutex {
 	uint blocking;
 	uint locked;

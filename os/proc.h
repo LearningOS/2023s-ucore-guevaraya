@@ -66,6 +66,17 @@ struct proc {
 	// LAB5: (1) Define your variables for deadlock detect here.
 	//			 You may need a flag to record if detection enabled,
 	//       and some arrays for detection algorithm.
+	uint8	deadlock_enable;
+	int	mutex_max[LOCK_POOL_SIZE];
+	int	mutex_available[LOCK_POOL_SIZE];
+	int	mutex_work[LOCK_POOL_SIZE];
+	int	mutex_alloction[NTHREAD][LOCK_POOL_SIZE];
+	int	mutex_request[NTHREAD][LOCK_POOL_SIZE];
+	int	semaphore_max[LOCK_POOL_SIZE];
+	int	semaphore_available[LOCK_POOL_SIZE];
+	int	semaphore_work[LOCK_POOL_SIZE];
+	int	semaphore_alloction[NTHREAD][LOCK_POOL_SIZE];
+	int	semaphore_request[NTHREAD][LOCK_POOL_SIZE];
 };
 
 int cpuid();
